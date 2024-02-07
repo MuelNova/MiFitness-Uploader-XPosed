@@ -1,5 +1,6 @@
 package sh.ouo.miband.uploader
 
+import android.R.attr.classLoader
 import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -19,6 +20,22 @@ class MainHook : IXposedHookLoadPackage {
     }
 
     private fun hook(lpparam: XC_LoadPackage.LoadPackageParam) {
+        XposedHelpers.findAndHookConstructor(
+            "com.xiaomi.fit.fitness.remote.FitnessSyncRemoteImpl",
+            lpparam.classLoader,
+            object : XC_MethodHook() {
+                @Throws(Throwable::class)
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    FitnessSyncRemoteImpl.instance = param.thisObject
+                    Log.d("MiBand", "FitnessSyncRemoteObject: ${FitnessSyncRemoteImpl.instance}")
+                    super.beforeHookedMethod(param)
+                }
+
+                @Throws(Throwable::class)
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    super.afterHookedMethod(param)
+                }
+            })
         XposedHelpers.findAndHookMethod(
             "com.xiaomi.fitness.keep_alive.KeepAliveHelper",
             lpparam.classLoader,

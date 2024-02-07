@@ -12,11 +12,29 @@ abstract class DailyReportBase (
     protected val lpparam: LoadPackageParam,
     private val instance: Any
 ) {
+    private var summarySyncManager: Any
     private lateinit var enumValue: Any
+
+    init {
+        val updaterClass = XposedHelpers.findClass("com.xiaomi.fitness.aggregation.summary.SummarySyncManager", lpparam.classLoader)
+        val companionInstance = XposedHelpers.getStaticObjectField(updaterClass, "Companion")
+        summarySyncManager = XposedHelpers.callMethod(companionInstance, "getInstance")
+    }
 
     protected fun setEnumValue(type: String) {
         val homeDataType = XposedHelpers.findClass("com.xiaomi.fit.fitness.export.data.annotation.HomeDataType", lpparam.classLoader)
         enumValue = XposedHelpers.getStaticObjectField(homeDataType, type)
+    }
+
+    private fun fitnessSyncRemote() {
+        if (FitnessSyncRemoteImpl.instance == null) {
+            return
+        }
+        XposedHelpers.callMethod(
+            FitnessSyncRemoteImpl.instance,
+            "triggerDataSync",
+            true
+        )
     }
 
     private fun getDay(day: String?): Pair<Long, Long> {
@@ -37,6 +55,7 @@ abstract class DailyReportBase (
     fun getDailyReport(day: String?): JsonElement {
         val (j1, j2) = getDay(day)
         Log.d("MiBand", "Ready to call: $instance, $enumValue, $j1, $j2")
+        fitnessSyncRemote()
         val result = XposedHelpers.callMethod(
             instance,
             "getReportList",

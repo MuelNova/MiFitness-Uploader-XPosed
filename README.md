@@ -6,7 +6,13 @@ An XPosed plugin for "MiFitness(小米健康)", allowing you to fetch the data u
 
 思路：[我的博客](https://n.ova.moe/blog/MiBand-8-Pro-Data-to-Obsidian) 或 [XLOG](https://x.ouo.sh/MiBand-8-Pro-Data-to-Obsidianmd)
 
-目前会在手机的 23235 端口下监听 GET 请求，路由 `/getDailyReport`，接受两个参数 `type`：可选值 `STEP` 和 `SLEEP`，`date`：时间的格式化字符，如 `2024-02-02`，返回一个 json，包含状态和数据。
+目前会在手机的 23235 端口下监听 GET 请求，路由 `/getDailyReport`，接受三个参数
+- `type`：必填。可选值 `STEP` 和 `SLEEP`
+- `date`：选填。时间的格式化字符，如 `2024-02-02`
+- `until`：选填。时间的格式化字符串，如 `2024-02-10`
+- 返回值：
+  - 状态码 `status`，0 为成功
+  - 数据 `data`，为一个数组
 
 ![](docs/1.png)
 
@@ -14,7 +20,7 @@ An XPosed plugin for "MiFitness(小米健康)", allowing you to fetch the data u
 秉持着能用就好的心态，其实不太想继续搓这个项目，但是还是画一些饼
 
 - [ ] 增加更多类型的导出
-- [ ] 支持自定义时间间隔范围导出
+- [X] 支持自定义时间间隔范围导出
 - [ ] 支持对称性密钥及 HMAC 验证等密码学措施保护安全性
 - [ ] 添加插件设置界面，允许自定义端口及密钥
 - [ ] 实时心率上传（Websocket）

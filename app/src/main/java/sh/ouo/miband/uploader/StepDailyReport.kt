@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 
 class StepDailyReport(lpparam: XC_LoadPackage.LoadPackageParam,
                       instance: Any
@@ -16,18 +17,29 @@ class StepDailyReport(lpparam: XC_LoadPackage.LoadPackageParam,
     }
 
     override fun toJson(obj: ArrayList<*>): JsonElement {
-        Log.d("MiBand", obj.toString())
-        val today = obj.getOrNull(0)
-        if (today != null) {
+        Log.d("MiBand", "${obj.size}: $obj")
+
+        if (obj.isNotEmpty()) {
             try {
-                Log.d("MiBand", Json.encodeToString(convertToSerializableReport(today)))
-                return Json.encodeToJsonElement(SerializableDailyStepReport.serializer(), convertToSerializableReport(today))
-            }
-            catch (e: Exception) {
+                // 转换列表中的每个对象
+                val reports = obj.mapNotNull { item ->
+                    try {
+                        convertToSerializableReport(item)
+                    } catch (e: Exception) {
+                        Log.e("MiBand", "Error converting item to report: $e")
+                        null // 在转换失败时返回null，并继续处理列表中的其他元素
+                    }
+                }
+
+                // 编码转换后的列表为JsonElement
+                return Json.encodeToJsonElement(reports)
+            } catch (e: Exception) {
+                Log.e("MiBand", "Error encoding reports to JSON: $e")
                 throw e
             }
+        } else {
+            throw NoSuchFieldException("No data fetched")
         }
-        throw NoSuchFieldException("No data fetched")
     }
 
     @Serializable

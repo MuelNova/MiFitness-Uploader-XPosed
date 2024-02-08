@@ -9,6 +9,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.reflect.full.declaredMembers
 
 class SleepDailyReport(lpparam: XC_LoadPackage.LoadPackageParam,
@@ -20,25 +21,27 @@ class SleepDailyReport(lpparam: XC_LoadPackage.LoadPackageParam,
 
     override fun toJson(obj: ArrayList<*>): JsonElement {
         Log.d("MiBand", obj.toString())
-        val allDaySleepReportClass =
-            lpparam.classLoader.loadClass("com.xiaomi.fit.fitness.export.data.aggregation.AllDaySleepReport")
-        var today : Any? = null
-        for ( sleep in obj ) {
-            if (allDaySleepReportClass.isInstance(sleep)) {
-                today = sleep
-                break
-            }
-        }
-        if (today != null) {
+        if (obj.isNotEmpty()) {
             try {
-                Log.d("MiBand", Json.encodeToString(convertToSerializableAllDaySleepReport(today)))
-                return Json.encodeToJsonElement(SerializableAllDaySleepReport.serializer(), convertToSerializableAllDaySleepReport(today))
-            }
-            catch (e: Exception) {
+                // 转换列表中的每个对象
+                val reports = obj.mapNotNull { item ->
+                    try {
+                        convertToSerializableAllDaySleepReport(item)
+                    } catch (e: Exception) {
+                        Log.e("MiBand", "Error converting item to report: $e")
+                        null // 在转换失败时返回null，并继续处理列表中的其他元素
+                    }
+                }
+
+                // 编码转换后的列表为JsonElement
+                return Json.encodeToJsonElement(reports)
+            } catch (e: Exception) {
+                Log.e("MiBand", "Error encoding reports to JSON: $e")
                 throw e
             }
+        } else {
+            throw NoSuchFieldException("No data fetched")
         }
-        throw NoSuchFieldException("No data fetched")
     }
 
     companion object {

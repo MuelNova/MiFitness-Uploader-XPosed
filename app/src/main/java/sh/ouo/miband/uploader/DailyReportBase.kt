@@ -28,6 +28,7 @@ abstract class DailyReportBase (
 
     private fun fitnessSyncRemote() {
         if (FitnessSyncRemoteImpl.instance == null) {
+            Log.e("MiBand", "FitnessSyncRemoteImplObject is none, the data might not be updated!")
             return
         }
         XposedHelpers.callMethod(
@@ -37,7 +38,7 @@ abstract class DailyReportBase (
         )
     }
 
-    private fun getDay(day: String?): Pair<Long, Long> {
+    private fun getDay(day: String?, day2: String? = null): Pair<Long, Long> {
         val formatPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val beijingZoneId = ZoneId.of("Asia/Shanghai")
         val today = if (day == null) {
@@ -48,12 +49,16 @@ abstract class DailyReportBase (
         val startOfDay = today.atStartOfDay(beijingZoneId)
         Log.d("MiBand", startOfDay.toString())
         val startOfDayTimestamp = startOfDay.toEpochSecond()
-        val endOfDayTimestamp = startOfDay.plusDays(1).minusSeconds(1).toEpochSecond() // 减去1秒以获取当天结束时间
+        val endOfDayTimestamp = if (day2 != null) {
+            LocalDate.parse(day2, formatPattern).atStartOfDay(beijingZoneId).toEpochSecond()
+        } else {
+            startOfDayTimestamp
+        }
         return Pair(startOfDayTimestamp, endOfDayTimestamp)
     }
 
-    fun getDailyReport(day: String?): JsonElement {
-        val (j1, j2) = getDay(day)
+    fun getDailyReport(day: String?, day2: String? = null): JsonElement {
+        val (j1, j2) = getDay(day, day2)
         Log.d("MiBand", "Ready to call: $instance, $enumValue, $j1, $j2")
         fitnessSyncRemote()
         val result = XposedHelpers.callMethod(

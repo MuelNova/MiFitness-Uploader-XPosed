@@ -76,6 +76,7 @@ class MySocketServer(
                     "/getDailyReport" -> {
                         val type = params["type"]
                         val date = params["date"]
+                        val until = params["until"]
                         if (type == null) {
                             val resp = SerializableResponse(
                                 status = 1,
@@ -87,7 +88,7 @@ class MySocketServer(
                             var resp: SerializableResponse
                             try {
                                 val report = DailyReportFactory.createDailyReport(lpparam, instance, type)
-                                val result = report.getDailyReport(date)
+                                val result = report.getDailyReport(date, until)
                                 resp = SerializableResponse(
                                     status = 0,
                                     data = result
